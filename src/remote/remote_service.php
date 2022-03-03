@@ -113,4 +113,8 @@ class RemoteServiceImpl implements RemoteService
         return "https://" . $this->hostname() . ":" . $this->port() . "/authenticator/sign/" . $encodedPayload;
     }
 
+    public function __toString()
+    {
+        return $this->hostname() . " " . $this->port();
+    }
 }

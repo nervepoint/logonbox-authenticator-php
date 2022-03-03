@@ -2,14 +2,16 @@
 
 namespace Authenticator;
 
+use ArrayObject;
 use Exception;
-use Logger\LoggerService;
 use Logger\AppLogger;
+use Logger\LoggerService;
 use phpseclib3\Common\Functions\Strings;
-use phpseclib3\Crypt\Common\AsymmetricKey;
+use phpseclib3\Crypt\Common\PublicKey;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
 use RemoteService\RemoteService;
+use Util\Util;
 
 class AuthenticatorClient
 {
@@ -87,12 +89,24 @@ class AuthenticatorClient
         $this->authorizeText = $authorizeText;
     }
 
+    /**
+     * @param bool $debug
+     */
     public function debug(bool $debug)
     {
         $this->logger->enableDebug($debug);
     }
 
-    public function getUserKeys(string $principal)
+    /**
+     * @return RemoteService
+     */
+    public function getRemoteService(): RemoteService
+    {
+        return $this->remoteService;
+    }
+
+
+    public function getUserKeys(string $principal): array
     {
         try
         {
@@ -142,39 +156,162 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    function authenticate(string $principal)
+    function authenticate(string $principal): AuthenticatorResponse
     {
         $payload = random_bytes(128);
-        $payloadBytes = unpack("C*", $payload);
-        $this->authenticateWithPayload($principal, $payloadBytes);
+        return $this->authenticateWithPayload($principal, $payload);
     }
 
-    function authenticateWithPayload(string $principal, array $payload)
+    function authenticateWithPayload(string $principal, string $payload): AuthenticatorResponse
     {
-        $sshKeys = $this->getUserKeys($principal);
-        $length = count($sshKeys);
-        for ($i = 0; $i < $length; ++$i)
+        $keys = $this->getUserKeys($principal);
+
+        $obj = new ArrayObject( $keys );
+        $it = $obj->getIterator();
+
+        while ($it->valid())
         {
             try
             {
-                $sshKey = $sshKeys[$i];
+                $key = $it->current();
+                $it->next();
+                return $this->signPayload($principal, $key,
+                    $this->replaceVariables($this->promptText, $principal),
+                    $this->authorizeText, $payload);
             }
             catch (Exception $e)
             {
-
+                $this->logger->error("Problem in signing payload.", $e);
             }
+        }
+
+    }
+
+    /**
+     * @throws Exception
+     */
+    function processResponse(string $payload, string $signature) : AuthenticatorResponse
+    {
+        $success = Strings::unpackSSH2("b", $signature);
+
+        if ($success[0])
+        {
+            $buffer = Strings::unpackSSH2("ssNs", $signature);
+            $username = $buffer[0];
+            $fingerprint = $buffer[1];
+            $flags = $buffer[2];
+            $signature = $buffer[3];
+
+            $key = $this->getUserKey($username, $fingerprint);
+
+            return new AuthenticatorResponse($payload, $signature, $key, $flags);
+        }
+        else
+        {
+            $buffer = Strings::unpackSSH2("s", $signature);
+            $message = $buffer[0];
+
+            throw new Exception($message);
         }
     }
 
     /**
      * @throws Exception
      */
-    private function signPayload(string $principal, AsymmetricKey $key, string $text, string $buttonText,
-                                 array $payload)
+    function generateRequest(string $principal, string $redirectURL): AuthenticatorRequest
+    {
+        $key = $this->getDefaultKey($principal);
+        $fingerprint = Util::getPublicKeyFingerprint($key);
+        $flags = $this->getFlags($key);
+        $noise = random_bytes(16);
+        $nonce = random_int(PHP_INT_MIN, PHP_INT_MAX);
+
+        $request = Strings::packSSH2("sssssNNs",
+            $principal,
+            $fingerprint,
+            $this->remoteName,
+            $this->promptText,
+            $this->authorizeText,
+            $flags,
+            $nonce,
+            $redirectURL
+        );
+
+        $request .= Strings::packSSH2("CCCCCCCCCCCCCCCC", ...unpack("C*",$noise));
+
+        $encoded = Util::base64url_encode($request);
+
+        return new AuthenticatorRequest($this, $encoded);
+    }
+
+    function getDefaultKey(string $principal) : ?PublicKey
+    {
+        $keys = $this->getUserKeys($principal);
+
+        $defaultKey = array_filter($keys, function ($item) {
+            return !($item instanceof RSA);
+        });
+
+        if (count($defaultKey) == 0)
+        {
+            $defaultKey = array_filter($keys, function ($item) {
+                return $item instanceof RSA;
+            });
+        }
+
+        if (count($defaultKey) == 0)
+        {
+            return null;
+        }
+
+        return array_pop($defaultKey);
+    }
+
+    /**
+     * @throws Exception
+     */
+    function getUserKey(string $principal, string $fingerprint) : ?PublicKey
+    {
+        $hash = strtolower(substr( trim($fingerprint), 0, 6));
+
+        if ($hash != "sha256")
+        {
+            throw new Exception("Fingerprint in sha256 supported.");
+        }
+
+        $keys = $this->getUserKeys($principal);
+
+        $key = array_filter($keys, function ($item) use ($fingerprint) {
+            return Util::getPublicKeyFingerprint($item) == $fingerprint;
+        });
+
+        if (count($key) == 0)
+        {
+            return null;
+        }
+
+        return array_pop($key);
+    }
+
+    function getFlags(PublicKey $key): int
+    {
+        if ($key instanceof RSA)
+        {
+            return 4;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function signPayload(string $principal, PublicKey $key, string $text, string $buttonText,
+                                 string $payload): AuthenticatorResponse
     {
         $fingerprint = Util::getPublicKeyFingerprint($key);
 
-        if ($this->debug())
+        if ($this->logger->isDebug())
         {
             $this->logger->info("Key fingerprint is " . $fingerprint);
         }
@@ -188,8 +325,9 @@ class AuthenticatorClient
             $flags = 4;
         }
 
-        $sig = $this->requestSignature($principal, $fingerprint, $text, $buttonText, $encodedPayload, $flags);
+        $signature = $this->requestSignature($principal, $fingerprint, $text, $buttonText, $encodedPayload, $flags);
 
+        return new AuthenticatorResponse($payload, $signature, $key, $flags);
     }
 
     /**
@@ -203,7 +341,7 @@ class AuthenticatorClient
 
         if ($this->logger->isDebug())
         {
-            $this->logger->info(strval($body));
+            $this->logger->info("The response is " . strval($body));
         }
 
         $success = $body->isSuccess();
@@ -222,7 +360,7 @@ class AuthenticatorClient
 
             $success = Strings::unpackSSH2("b", $data);
 
-            if (!$success)
+            if (!$success[0])
             {
                 throw new Exception("The server did not respond with a valid response!");
             }
@@ -232,147 +370,10 @@ class AuthenticatorClient
         return Util::base64url_decode($signature);
     }
 
-}
-
-class SignatureResponse
-{
-    private bool $success;
-    private string $message;
-    private string $signature;
-    private string $response;
-
-    /**
-     * SignatureResponse constructor.
-     * @param bool $success
-     * @param string $message
-     * @param string $signature
-     * @param string $response
-     */
-    public function __construct(bool $success, string $message, string $signature, string $response)
+    private function replaceVariables(string $promptText, string $principal)
     {
-        $this->success = $success;
-        $this->message = $message;
-        $this->signature = $signature;
-        $this->response = $response;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isSuccess(): bool
-    {
-        return $this->success;
-    }
-
-    /**
-     * @param bool $success
-     */
-    public function setSuccess(bool $success): void
-    {
-        $this->success = $success;
-    }
-
-    /**
-     * @return string
-     */
-    public function getMessage(): string
-    {
-        return $this->message;
-    }
-
-    /**
-     * @param string $message
-     */
-    public function setMessage(string $message): void
-    {
-        $this->message = $message;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSignature(): string
-    {
-        return $this->signature;
-    }
-
-    /**
-     * @param string $signature
-     */
-    public function setSignature(string $signature): void
-    {
-        $this->signature = $signature;
-    }
-
-    /**
-     * @return string
-     */
-    public function getResponse(): string
-    {
-        return $this->response;
-    }
-
-    /**
-     * @param string $response
-     */
-    public function setResponse(string $response): void
-    {
-        $this->response = $response;
-    }
-
-    public function __toString()
-    {
-        return $this->success . " " . $this->message . " " . $this->signature . " " . $this->response;
-    }
-
-}
-
-class AuthenticatorResponse
-{
-
-}
-
-class Util
-{
-    /**
-     * Encode data to Base64URL
-     * @param string $data
-     * @return boolean|string
-     */
-    static function base64url_encode($data)
-    {
-        // First of all you should encode $data to Base64 string
-        $b64 = base64_encode($data);
-
-        // Make sure you get a valid result, otherwise, return FALSE, as the base64_encode() function do
-        if ($b64 === false) {
-            return false;
-        }
-
-        // Convert Base64 to Base64URL by replacing “+” with “-” and “/” with “_”
-        $url = strtr($b64, '+/', '-_');
-
-        // Remove padding character from the end of line and return the Base64URL result
-        return rtrim($url, '=');
-    }
-
-    /**
-     * Decode data from Base64URL
-     * @param string $data
-     * @param boolean $strict
-     * @return boolean|string
-     */
-    static function base64url_decode($data, $strict = false)
-    {
-        // Convert Base64URL to Base64 by replacing “-” with “+” and “_” with “/”
-        $b64 = strtr($data, '-_', '+/');
-
-        // Decode Base64 string and return the original data
-        return base64_decode($b64, $strict);
-    }
-
-    static function getPublicKeyFingerprint($key)
-    {
-        return "SHA256:" . $key->getFingerprint("sha256");
+        $rp = str_replace("{principal}", $principal, $promptText);
+        $rrn = str_replace("{remoteName}", $this->remoteName, $rp);
+        return str_replace("{hostname}", $this->remoteService->hostname(), $rrn);
     }
 }

@@ -1,6 +1,30 @@
 {
+  "name": "logonbox/authenticator",
+  "description": "An API for using LogonBox Authenticator credentials in your own PHP applications",
+  "keywords" : ["authentication"],
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "authors": [
+    {
+      "name": "Lee David Painter",
+      "email": "lee@logonbox.com",
+      "homepage": "https://www.logonbox.com"
+    },
+    {
+      "name": "Brett Smith",
+      "email": "brett@logonbox.com",
+      "homepage": "https://www.logonbox.com"
+    }
+  ],
+  "autoload": {
+    "classmap": ["src/auth", "src/logger", "src/remote", "src/util"]
+  },
   "require": {
+    "php" : ">=7.4",
     "phpseclib/phpseclib": "3.0.*",
     "nategood/httpful": "0.3.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
   }
 }
