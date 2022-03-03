@@ -110,4 +110,49 @@ class AuthenticatorClientTest extends TestCase
         $this->assertTrue($verify);
 
     }
+
+    /**
+     * @throws Exception
+     */
+    function testItShouldThrowErrorIfRemoteResponseDoesNotReturnSignature()
+    {
+        $principal = "some.user@directory.com";
+        // Create a mock for the RemoteService class,
+        $remoteService = $this->createMock(RemoteService::class);
+
+        // Set up the expectation for the keys method
+        // to be called only once and with the string value for variable $principal
+        // as its parameter and return list of open ssh keys.
+        $remoteService->expects($this->once())
+            ->method("keys")
+            ->with($this->equalTo($principal))
+            ->willReturn($this->sshKeysFormatted($principal));
+
+        $remoteService->method("hostname")
+            ->willReturn("some.directory.org");
+
+        $remoteService->method("port")
+            ->willReturn(443);
+
+        $remoteService->expects($this->once())
+            ->method("signPayload")
+            ->with(
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+            )
+            ->willReturnCallback(function () {
+                return (new SignatureResponse(false, "", "", ""));
+            });
+
+
+        $authenticatorClient = new AuthenticatorClient($remoteService);
+        $authenticatorClient->debug(true);
+
+        $response = $authenticatorClient->authenticate($principal);
+        $this->assertFalse($response->verify());
+    }
 }

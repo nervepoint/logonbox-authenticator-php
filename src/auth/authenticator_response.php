@@ -17,15 +17,19 @@ class AuthenticatorResponse
     /**
      * AuthenticatorResponse constructor.
      * @param string $payload
-     * @param string $signature
-     * @param PublicKey $key
+     * @param string|null $signature
+     * @param PublicKey|null $key
      * @param int $flags
      */
-    public function __construct(string $payload, string $signature, PublicKey $key, int $flags)
+    public function __construct(string $payload, ?string $signature, ?PublicKey $key, int $flags)
     {
         $this->payload = $payload;
-        $this->signature = $signature;
-        $this->key = $key;
+        if (!empty($signature)) {
+            $this->signature = $signature;
+        }
+        if (!empty($key)) {
+            $this->key = $key;
+        }
         $this->flags = $flags;
     }
 
@@ -67,7 +71,7 @@ class AuthenticatorResponse
      */
     public function verify(): bool
     {
-        if ($this->signature == null)
+        if (empty($this->signature))
         {
             return false;
         }

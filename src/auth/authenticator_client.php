@@ -185,6 +185,8 @@ class AuthenticatorClient
             }
         }
 
+        return new AuthenticatorResponse($payload, null, null, 0);
+
     }
 
     /**
