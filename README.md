@@ -160,3 +160,7 @@ try {
     echo $e;
 }
 ```
+
+## Minimum Requirements
+
+Current stable release tested with `PHP 7.4.3`.
