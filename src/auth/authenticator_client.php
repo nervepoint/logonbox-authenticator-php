@@ -29,7 +29,7 @@ class AuthenticatorClient
      */
     public function __construct(RemoteService $remoteService, LoggerService $logger = null)
     {
-        if ($logger == null)
+        if (empty($logger))
         {
             $this->logger = new AppLogger();
         }

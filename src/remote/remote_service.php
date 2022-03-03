@@ -36,7 +36,7 @@ class RemoteServiceImpl implements RemoteService
     {
         $this->hostname = $hostname;
         $this->port = $port;
-        if ($logger == null)
+        if (empty($logger))
         {
             $this->logger = new AppLogger();
         }
