@@ -1,6 +1,24 @@
-# logonbox-authenticator-php
+# LogonBox Authenticator API for PHP
 
-An API for using the LogonBox Authenticator from PHP applications
+Use this API to integrate LogonBox Authenticator into your own PHP application authentication flows.  
+
+The LogonBox Authenticator uses an authentication mechanism similar to SSH private key authentication where users keys are published in an authorized keys listing on the credential server. This API will read the trusted public keys and then submit an authentication request payload to the credential server for signing by the corresponding private key. 
+
+As part of the signing operation, the user must authorize the request within the LogonBox Authenticator app. Once authorized the payload is signed by the private key, which is held exclusively within the secure storage of the app. 
+
+To authenticate the user, the API verifies the signature returned to obtain the authentication result.
+
+# About LogonBox Authenticator
+
+Safeguard your people, passwords and apps with [LogonBox's](https://logonbox.com) 2-Factor [Authentication app](https://www.logonbox.com/content/logonbox-authenticator/) for Android and iOS. 
+
+<img src="src/web/logonbox-logo.png" width="256">
+
+## Other Languages
+
+ * [Python](https://github.com/nervepoint/logonbox-authenticator-python)
+ * [Node/Javascript](https://github.com/nervepoint/logonbox-authenticator-nodejs)
+ * [Java](https://github.com/nervepoint/logonbox-authenticator-java)
 
 ## Usage
 
