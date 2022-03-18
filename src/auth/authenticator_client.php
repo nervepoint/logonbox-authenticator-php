@@ -10,6 +10,8 @@ use phpseclib3\Common\Functions\Strings;
 use phpseclib3\Crypt\Common\PublicKey;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
+use RandomGenerator\AppRandomGenerator;
+use RandomGenerator\RandomGenerator;
 use RemoteService\RemoteService;
 use Util\Util;
 
@@ -17,6 +19,7 @@ class AuthenticatorClient
 {
     private LoggerService $logger;
     private RemoteService $remoteService;
+    private RandomGenerator $randomGenerator;
 
     private string $remoteName = "LogonBox Authenticator API";
     private string $promptText = "{principal} wants to authenticate from {remoteName} using your {hostname} credentials.";
@@ -26,8 +29,9 @@ class AuthenticatorClient
      * AuthenticatorClient constructor.
      * @param RemoteService $remoteService
      * @param LoggerService|null $logger
+     * @param RandomGenerator|null $randomGenerator
      */
-    public function __construct(RemoteService $remoteService, LoggerService $logger = null)
+    public function __construct(RemoteService $remoteService, LoggerService $logger = null, RandomGenerator $randomGenerator = null)
     {
         if (empty($logger))
         {
@@ -36,6 +40,15 @@ class AuthenticatorClient
         else
         {
             $this->logger = $logger;
+        }
+
+        if (empty($randomGenerator))
+        {
+            $this->randomGenerator = new AppRandomGenerator();
+        }
+        else
+        {
+            $this->randomGenerator = $randomGenerator;
         }
 
         $this->remoteService = $remoteService;
@@ -117,6 +130,11 @@ class AuthenticatorClient
                 $this->logger->info($body);
             }
 
+            if (strpos($body, "# Authorized") === false) {
+                $hostname = $this->remoteService->hostname();
+                throw new Exception("Unable to list users authorized keys ${hostname}.");
+            }
+
             $keys = preg_split("/\r\n?|\n/", $body);
 
             if ($this->logger->isDebug())
@@ -125,7 +143,7 @@ class AuthenticatorClient
             }
 
             $filtered = array_filter($keys, function ($item) {
-                return substr( trim($item), 0, 1 ) != "#";
+                return substr( trim($item), 0, 1 ) != "#" && strlen(trim($item))  > 0;
             });
 
             return array_map(function ($item) {
@@ -158,7 +176,7 @@ class AuthenticatorClient
      */
     function authenticate(string $principal): AuthenticatorResponse
     {
-        $payload = random_bytes(128);
+        $payload = $this->randomGenerator->random_bytes(128);
         return $this->authenticateWithPayload($principal, $payload);
     }
 
@@ -223,21 +241,28 @@ class AuthenticatorClient
     function generateRequest(string $principal, string $redirectURL): AuthenticatorRequest
     {
         $key = $this->getDefaultKey($principal);
+
+        if ($key == null)
+        {
+            throw new Exception("No key found for $principal.");
+        }
         $fingerprint = Util::getPublicKeyFingerprint($key);
         $flags = $this->getFlags($key);
-        $noise = random_bytes(16);
-        $nonce = random_int(PHP_INT_MIN, PHP_INT_MAX);
+        $noise = $this->randomGenerator->random_bytes(16);
+        $nonce = $this->randomGenerator->random_bytes(4);
 
-        $request = Strings::packSSH2("sssssNNs",
+        $request = Strings::packSSH2("sssssN",
             $principal,
             $fingerprint,
             $this->remoteName,
             $this->promptText,
             $this->authorizeText,
-            $flags,
-            $nonce,
-            $redirectURL
+            $flags
         );
+
+        $request .= Strings::packSSH2("CCCC", ...unpack("C*",$nonce));
+
+        $request .= Strings::packSSH2("s", $redirectURL);
 
         $request .= Strings::packSSH2("CCCCCCCCCCCCCCCC", ...unpack("C*",$noise));
 
@@ -249,6 +274,11 @@ class AuthenticatorClient
     function getDefaultKey(string $principal) : ?PublicKey
     {
         $keys = $this->getUserKeys($principal);
+
+        if (count($keys) == 0)
+        {
+            return null;
+        }
 
         $defaultKey = array_filter($keys, function ($item) {
             return !($item instanceof RSA);
@@ -282,6 +312,11 @@ class AuthenticatorClient
         }
 
         $keys = $this->getUserKeys($principal);
+
+        if (count($keys) == 0)
+        {
+            return null;
+        }
 
         $key = array_filter($keys, function ($item) use ($fingerprint) {
             return Util::getPublicKeyFingerprint($item) == $fingerprint;
@@ -360,7 +395,7 @@ class AuthenticatorClient
         {
             $data = Util::base64url_decode($response);
 
-            $success = Strings::unpackSSH2("b", $data);
+            $success = Strings::unpackSSH2("bs", $data);
 
             if (!$success[0])
             {
