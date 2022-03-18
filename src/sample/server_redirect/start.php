@@ -12,7 +12,7 @@ if(session_status() == PHP_SESSION_NONE) {
 
 try {
 
-    $remoteService = new RemoteServiceImpl("some.directory", 443, new AppLogger());
+    $remoteService = new RemoteServiceImpl("some.directory");
     $authenticatorClient = new AuthenticatorClient($remoteService);
 
     $user = $_POST["user"];
