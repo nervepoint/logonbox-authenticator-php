@@ -144,9 +144,7 @@ class AuthenticatorClientTest extends TestCase
                 $this->anything(),
                 $this->anything(),
             )
-            ->willReturnCallback(function () {
-                return (new SignatureResponse(false, "", "", ""));
-            });
+            ->willReturn(new SignatureResponse(false, "", "", ""));
 
 
         $authenticatorClient = new AuthenticatorClient($remoteService);
