@@ -17,7 +17,7 @@
     }
   ],
   "autoload": {
-    "classmap": ["src/auth", "src/logger", "src/remote", "src/util"]
+    "classmap": ["src/auth", "src/logger", "src/remote", "src/util", "src/random_generator"]
   },
   "require": {
     "php" : ">=7.4",
