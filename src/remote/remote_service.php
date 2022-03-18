@@ -76,7 +76,7 @@ class RemoteServiceImpl implements RemoteService
      */
     public function keys(string $principal)
     {
-        $url = "https://" . $this->hostname() . ":" . $this->port() . "/authorizedKeys/" . $principal;
+        $url = "https://" . $this->hostname() . ":" . $this->port() . "/app/api/authenticator/keys/" . $principal;
         $response = Request::get($url)->expectsText()->send();
         return $response->body;
     }
