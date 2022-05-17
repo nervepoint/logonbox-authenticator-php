@@ -181,4 +181,4 @@ try {
 
 ## Minimum Requirements
 
-Current stable release tested with `PHP 7.4.3`.
+Current stable release tested with `PHP 7.3.33`.
