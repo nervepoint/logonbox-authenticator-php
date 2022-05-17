@@ -12,19 +12,19 @@ use Logger\LoggerService;
 
 interface RemoteService
 {
-    public function keys(string $principal);
-    public function signPayload(string $principal, string $remoteName, string $fingerprint, string $text,
-            string $buttonText, string $encodedPayload, int $flags): SignatureResponse;
-    public function getSignUrl(string $encodedPayload): string;
-    public function hostname(): string;
-    public function port(): int;
+    public function keys($principal);
+    public function signPayload($principal, $remoteName, $fingerprint, $text,
+            $buttonText, $encodedPayload, $flags);
+    public function getSignUrl($encodedPayload);
+    public function hostname();
+    public function port();
 }
 
 class RemoteServiceImpl implements RemoteService
 {
-    private string $hostname;
-    private int $port;
-    private LoggerService $logger;
+    private $hostname;
+    private $port;
+    private $logger;
 
     /**
      * RemoteServiceImpl constructor.
@@ -32,7 +32,7 @@ class RemoteServiceImpl implements RemoteService
      * @param int $port
      * @param LoggerService|null $logger
      */
-    public function __construct(string $hostname, int $port = 443, LoggerService $logger = null)
+    public function __construct(string $hostname, $port = 443, $logger = null)
     {
         $this->hostname = $hostname;
         $this->port = $port;
@@ -50,7 +50,7 @@ class RemoteServiceImpl implements RemoteService
     /**
      * @return string
      */
-    public function hostname(): string
+    public function hostname()
     {
         return $this->hostname;
     }
@@ -58,7 +58,7 @@ class RemoteServiceImpl implements RemoteService
     /**
      * @return int
      */
-    public function port(): int
+    public function port()
     {
         return $this->port;
     }
@@ -74,7 +74,7 @@ class RemoteServiceImpl implements RemoteService
     /**
      * @throws ConnectionErrorException
      */
-    public function keys(string $principal)
+    public function keys($principal)
     {
         $url = "https://" . $this->hostname() . ":" . $this->port() . "/app/api/authenticator/keys/" . $principal;
         $response = Request::get($url)->expectsText()->send();
@@ -84,8 +84,8 @@ class RemoteServiceImpl implements RemoteService
     /**
      * @throws ConnectionErrorException
      */
-    public function signPayload(string $principal, string $remoteName, string $fingerprint, string $text,
-                                string $buttonText, string $encodedPayload, int $flags): SignatureResponse
+    public function signPayload($principal, $remoteName, $fingerprint, $text,
+                                $buttonText, $encodedPayload, $flags)
     {
         $url = "https://" . $this->hostname() . ":" . $this->port() . "/app/api/authenticator/signPayload";
 
@@ -108,7 +108,7 @@ class RemoteServiceImpl implements RemoteService
         return new SignatureResponse($json->success, $json->message, $json->signature, $json->response);
     }
 
-    public function getSignUrl(string $encodedPayload): string
+    public function getSignUrl($encodedPayload)
     {
         return "https://" . $this->hostname() . ":" . $this->port() . "/authenticator/sign/" . $encodedPayload;
     }

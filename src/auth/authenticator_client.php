@@ -17,13 +17,13 @@ use Util\Util;
 
 class AuthenticatorClient
 {
-    private LoggerService $logger;
-    private RemoteService $remoteService;
-    private RandomGenerator $randomGenerator;
+    private $logger;
+    private $remoteService;
+    private $randomGenerator;
 
-    private string $remoteName = "LogonBox Authenticator API";
-    private string $promptText = "{principal} wants to authenticate from {remoteName} using your {hostname} credentials.";
-    private string $authorizeText = "Authorize";
+    private $remoteName = "LogonBox Authenticator API";
+    private $promptText = "{principal} wants to authenticate from {remoteName} using your {hostname} credentials.";
+    private $authorizeText = "Authorize";
 
     /**
      * AuthenticatorClient constructor.
@@ -31,7 +31,7 @@ class AuthenticatorClient
      * @param LoggerService|null $logger
      * @param RandomGenerator|null $randomGenerator
      */
-    public function __construct(RemoteService $remoteService, LoggerService $logger = null, RandomGenerator $randomGenerator = null)
+    public function __construct($remoteService, $logger = null, $randomGenerator = null)
     {
         if (empty($logger))
         {
@@ -57,7 +57,7 @@ class AuthenticatorClient
     /**
      * @return string
      */
-    public function getRemoteName(): string
+    public function getRemoteName()
     {
         return $this->remoteName;
     }
@@ -65,7 +65,7 @@ class AuthenticatorClient
     /**
      * @param string $remoteName
      */
-    public function setRemoteName(string $remoteName): void
+    public function setRemoteName($remoteName)
     {
         $this->remoteName = $remoteName;
     }
@@ -73,7 +73,7 @@ class AuthenticatorClient
     /**
      * @return string
      */
-    public function getPromptText(): string
+    public function getPromptText()
     {
         return $this->promptText;
     }
@@ -81,7 +81,7 @@ class AuthenticatorClient
     /**
      * @param string $promptText
      */
-    public function setPromptText(string $promptText): void
+    public function setPromptText($promptText)
     {
         $this->promptText = $promptText;
     }
@@ -89,7 +89,7 @@ class AuthenticatorClient
     /**
      * @return string
      */
-    public function getAuthorizeText(): string
+    public function getAuthorizeText()
     {
         return $this->authorizeText;
     }
@@ -97,7 +97,7 @@ class AuthenticatorClient
     /**
      * @param string $authorizeText
      */
-    public function setAuthorizeText(string $authorizeText): void
+    public function setAuthorizeText($authorizeText)
     {
         $this->authorizeText = $authorizeText;
     }
@@ -105,7 +105,7 @@ class AuthenticatorClient
     /**
      * @param bool $debug
      */
-    public function debug(bool $debug)
+    public function debug($debug)
     {
         $this->logger->enableDebug($debug);
     }
@@ -113,13 +113,13 @@ class AuthenticatorClient
     /**
      * @return RemoteService
      */
-    public function getRemoteService(): RemoteService
+    public function getRemoteService()
     {
         return $this->remoteService;
     }
 
 
-    public function getUserKeys(string $principal): array
+    public function getUserKeys($principal)
     {
         try
         {
@@ -174,13 +174,13 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    function authenticate(string $principal): AuthenticatorResponse
+    function authenticate($principal)
     {
         $payload = $this->randomGenerator->random_bytes(128);
         return $this->authenticateWithPayload($principal, $payload);
     }
 
-    function authenticateWithPayload(string $principal, string $payload): AuthenticatorResponse
+    function authenticateWithPayload($principal, $payload)
     {
         $keys = $this->getUserKeys($principal);
 
@@ -210,7 +210,7 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    function processResponse(string $payload, string $signature) : AuthenticatorResponse
+    function processResponse($payload, $signature)
     {
         $success = Strings::unpackSSH2("b", $signature);
 
@@ -238,7 +238,7 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    function generateRequest(string $principal, string $redirectURL): AuthenticatorRequest
+    function generateRequest($principal, $redirectURL)
     {
         $key = $this->getDefaultKey($principal);
 
@@ -271,7 +271,7 @@ class AuthenticatorClient
         return new AuthenticatorRequest($this, $encoded);
     }
 
-    function getDefaultKey(string $principal) : ?PublicKey
+    function getDefaultKey($principal)
     {
         $keys = $this->getUserKeys($principal);
 
@@ -302,7 +302,7 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    function getUserKey(string $principal, string $fingerprint) : ?PublicKey
+    function getUserKey($principal, $fingerprint)
     {
         $hash = strtolower(substr( trim($fingerprint), 0, 6));
 
@@ -330,7 +330,7 @@ class AuthenticatorClient
         return array_pop($key);
     }
 
-    function getFlags(PublicKey $key): int
+    function getFlags($key)
     {
         if ($key instanceof RSA)
         {
@@ -343,8 +343,8 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    private function signPayload(string $principal, PublicKey $key, string $text, string $buttonText,
-                                 string $payload): AuthenticatorResponse
+    private function signPayload($principal, $key, $text, $buttonText,
+                                 $payload)
     {
         $fingerprint = Util::getPublicKeyFingerprint($key);
 
@@ -370,8 +370,8 @@ class AuthenticatorClient
     /**
      * @throws Exception
      */
-    private function requestSignature(string $principal, string $fingerprint, string $text, string $buttonText,
-                                      string $encodedPayload, int $flags)
+    private function requestSignature($principal, $fingerprint, $text, $buttonText,
+                                      $encodedPayload, $flags)
     {
         $body = $this->remoteService->signPayload($principal, $this->remoteName, $fingerprint,
             $text, $buttonText, $encodedPayload, $flags);
@@ -407,7 +407,7 @@ class AuthenticatorClient
         return Util::base64url_decode($signature);
     }
 
-    private function replaceVariables(string $promptText, string $principal)
+    private function replaceVariables($promptText, $principal)
     {
         $rp = str_replace("{principal}", $principal, $promptText);
         $rrn = str_replace("{remoteName}", $this->remoteName, $rp);

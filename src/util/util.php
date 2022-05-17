@@ -9,7 +9,7 @@ class Util
      * @param string $data
      * @return string
      */
-    static function base64url_encode(string $data): string
+    static function base64url_encode($data): string
     {
         // First of all you should encode $data to Base64 string
         $b64 = base64_encode($data);
@@ -27,7 +27,7 @@ class Util
      * @param boolean $strict
      * @return boolean|string
      */
-    static function base64url_decode(string $data, bool $strict = false)
+    static function base64url_decode($data, $strict = false)
     {
         // Convert Base64URL to Base64 by replacing “-” with “+” and “_” with “/”
         $b64 = strtr($data, '-_', '+/');
@@ -41,7 +41,7 @@ class Util
      * @param $key
      * @return string
      */
-    static function getPublicKeyFingerprint($key): string
+    static function getPublicKeyFingerprint($key)
     {
         return "SHA256:" . $key->getFingerprint("sha256");
     }

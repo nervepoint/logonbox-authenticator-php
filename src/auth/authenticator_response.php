@@ -9,10 +9,10 @@ use phpseclib3\Crypt\RSA;
 
 class AuthenticatorResponse
 {
-    private string $payload;
-    private string $signature;
-    private PublicKey $key;
-    private int $flags;
+    private $payload;
+    private $signature;
+    private $key;
+    private $flags;
 
     /**
      * AuthenticatorResponse constructor.
@@ -21,7 +21,7 @@ class AuthenticatorResponse
      * @param PublicKey|null $key
      * @param int $flags
      */
-    public function __construct(string $payload, ?string $signature, ?PublicKey $key, int $flags)
+    public function __construct($payload, $signature, $key, $flags)
     {
         $this->payload = $payload;
         if (!empty($signature)) {
@@ -37,7 +37,7 @@ class AuthenticatorResponse
     /**
      * @return string
      */
-    public function getPayload(): string
+    public function getPayload()
     {
         return $this->payload;
     }
@@ -45,7 +45,7 @@ class AuthenticatorResponse
     /**
      * @return string
      */
-    public function getSignature(): string
+    public function getSignature()
     {
         return $this->signature;
     }
@@ -53,7 +53,7 @@ class AuthenticatorResponse
     /**
      * @return PublicKey
      */
-    public function getKey(): PublicKey
+    public function getKey()
     {
         return $this->key;
     }
@@ -61,7 +61,7 @@ class AuthenticatorResponse
     /**
      * @return int
      */
-    public function getFlags(): int
+    public function getFlags()
     {
         return $this->flags;
     }
@@ -69,7 +69,7 @@ class AuthenticatorResponse
     /**
      * @throws Exception
      */
-    public function verify(): bool
+    public function verify()
     {
         if (empty($this->signature))
         {

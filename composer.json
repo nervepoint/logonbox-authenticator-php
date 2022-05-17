@@ -20,7 +20,7 @@
     "classmap": ["src/auth", "src/logger", "src/remote", "src/util", "src/random_generator"]
   },
   "require": {
-    "php" : ">=7.4",
+    "php" : ">=7.3",
     "phpseclib/phpseclib": "3.0.*",
     "nategood/httpful": "0.3.*"
   },

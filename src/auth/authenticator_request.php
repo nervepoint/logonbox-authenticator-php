@@ -7,15 +7,15 @@ use Util\Util;
 
 class AuthenticatorRequest
 {
-    private AuthenticatorClient $authenticatorClient;
-    private string $encodedPayload;
+    private $authenticatorClient;
+    private $encodedPayload;
 
     /**
      * AuthenticatorRequest constructor.
      * @param AuthenticatorClient $authenticatorClient
      * @param string $encodedPayload
      */
-    public function __construct(AuthenticatorClient $authenticatorClient, string $encodedPayload)
+    public function __construct($authenticatorClient, $encodedPayload)
     {
         $this->authenticatorClient = $authenticatorClient;
         $this->encodedPayload = $encodedPayload;
@@ -24,7 +24,7 @@ class AuthenticatorRequest
     /**
      * @return AuthenticatorClient
      */
-    public function getAuthenticatorClient(): AuthenticatorClient
+    public function getAuthenticatorClient()
     {
         return $this->authenticatorClient;
     }
@@ -32,7 +32,7 @@ class AuthenticatorRequest
     /**
      * @return string
      */
-    public function getEncodedPayload(): string
+    public function getEncodedPayload()
     {
         return $this->encodedPayload;
     }
@@ -41,7 +41,7 @@ class AuthenticatorRequest
     /**
      * @throws Exception
      */
-    function processResponse(string $response): AuthenticatorResponse
+    function processResponse($response)
     {
         $payload = Util::base64url_decode($this->encodedPayload);
         $signature = Util::base64url_decode($response);
@@ -49,7 +49,7 @@ class AuthenticatorRequest
         return $this->authenticatorClient->processResponse($payload, $signature);
     }
 
-    function getSignUrl() : string
+    function getSignUrl()
     {
         return $this->authenticatorClient->getRemoteService()->getSignUrl($this->encodedPayload);
     }

@@ -5,33 +5,33 @@ use Exception;
 
 interface LoggerService
 {
-    public function info(string $message);
-    public function error(string $message, Exception $exception);
-    public function enableDebug(bool $debug);
-    public function isDebug(): bool;
+    public function info($message);
+    public function error($message, $exception);
+    public function enableDebug($debug);
+    public function isDebug();
 }
 
 class AppLogger implements LoggerService
 {
 
-    private bool $debug = false;
+    private $debug = false;
 
-    public function info(string $message)
+    public function info($message)
     {
         echo $message . PHP_EOL;;
     }
 
-    public function error(string $message, Exception $exception)
+    public function error($message, $exception)
     {
         echo $message . " ". $exception . PHP_EOL;
     }
 
-    public function enableDebug(bool $debug)
+    public function enableDebug($debug)
     {
         $this->debug = $debug;
     }
 
-    public function isDebug(): bool
+    public function isDebug()
     {
         return $this->debug;
     }

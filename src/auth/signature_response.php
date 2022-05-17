@@ -4,10 +4,10 @@ namespace Authenticator;
 
 class SignatureResponse
 {
-    private bool $success;
-    private string $message;
-    private string $signature;
-    private string $response;
+    private $success;
+    private $message;
+    private $signature;
+    private $response;
 
     /**
      * SignatureResponse constructor.
@@ -16,7 +16,7 @@ class SignatureResponse
      * @param string $signature
      * @param string $response
      */
-    public function __construct(bool $success, string $message, string $signature, string $response)
+    public function __construct($success, $message, $signature, $response)
     {
         $this->success = $success;
         $this->message = $message;
@@ -27,7 +27,7 @@ class SignatureResponse
     /**
      * @return bool
      */
-    public function isSuccess(): bool
+    public function isSuccess()
     {
         return $this->success;
     }
@@ -35,7 +35,7 @@ class SignatureResponse
     /**
      * @param bool $success
      */
-    public function setSuccess(bool $success): void
+    public function setSuccess($success)
     {
         $this->success = $success;
     }
@@ -43,7 +43,7 @@ class SignatureResponse
     /**
      * @return string
      */
-    public function getMessage(): string
+    public function getMessage()
     {
         return $this->message;
     }
@@ -51,7 +51,7 @@ class SignatureResponse
     /**
      * @param string $message
      */
-    public function setMessage(string $message): void
+    public function setMessage($message)
     {
         $this->message = $message;
     }
@@ -59,7 +59,7 @@ class SignatureResponse
     /**
      * @return string
      */
-    public function getSignature(): string
+    public function getSignature()
     {
         return $this->signature;
     }
@@ -67,7 +67,7 @@ class SignatureResponse
     /**
      * @param string $signature
      */
-    public function setSignature(string $signature): void
+    public function setSignature($signature)
     {
         $this->signature = $signature;
     }
@@ -75,7 +75,7 @@ class SignatureResponse
     /**
      * @return string
      */
-    public function getResponse(): string
+    public function getResponse()
     {
         return $this->response;
     }
@@ -83,7 +83,7 @@ class SignatureResponse
     /**
      * @param string $response
      */
-    public function setResponse(string $response): void
+    public function setResponse($response)
     {
         $this->response = $response;
     }
