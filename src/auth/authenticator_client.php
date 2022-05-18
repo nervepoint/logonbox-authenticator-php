@@ -411,6 +411,13 @@ class AuthenticatorClient
     {
         $rp = str_replace("{principal}", $principal, $promptText);
         $rrn = str_replace("{remoteName}", $this->remoteName, $rp);
-        return str_replace("{hostname}", $this->remoteService->hostname(), $rrn);
+        $text=  str_replace("{hostname}", $this->remoteService->hostname(), $rrn);
+
+        if ($this->logger->isDebug())
+        {
+                $this->logger->info("The replacement text found as " . $text);
+        }
+
+        return $text;
     }
 }
