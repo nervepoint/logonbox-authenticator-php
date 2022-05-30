@@ -194,3 +194,4 @@ modules.xml
 /.project
 /.buildpath
 /.settings/
+*.swp
