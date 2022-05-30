@@ -1,5 +1,7 @@
 # LogonBox Authenticator API for PHP
 
+[![Packagist](https://img.shields.io/packagist/l/logonbox/logonbox-authenticator)](https://packagist.org/packages/logonbox/logonbox-authenticator/)
+
 Use this API to integrate LogonBox Authenticator into your own PHP application authentication flows.  
 
 The LogonBox Authenticator uses an authentication mechanism similar to SSH private key authentication where users keys are published in an authorized keys listing on the credential server. This API will read the trusted public keys and then submit an authentication request payload to the credential server for signing by the corresponding private key. 
