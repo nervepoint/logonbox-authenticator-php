@@ -19,6 +19,7 @@ Safeguard your people, passwords and apps with [LogonBox's](https://logonbox.com
  * [Python](https://github.com/nervepoint/logonbox-authenticator-python)
  * [Node/Javascript](https://github.com/nervepoint/logonbox-authenticator-nodejs)
  * [Java](https://github.com/nervepoint/logonbox-authenticator-java)
+ * [WordPress](https://github.com/nervepoint/logonbox-authenticator-wordpress)
 
 ## Usage
 
