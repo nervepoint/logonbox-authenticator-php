@@ -1,6 +1,6 @@
 # LogonBox Authenticator API for PHP
 
-[![Packagist](https://img.shields.io/packagist/l/logonbox/authenticator)](https://packagist.org/packages/logonbox/authenticator/)
+[![Packagist](https://img.shields.io/packagist/v/logonbox/authenticator)](https://packagist.org/packages/logonbox/authenticator/) [![Packagist](https://img.shields.io/packagist/l/logonbox/authenticator)](https://www.apache.org/licenses/LICENSE-2.0)
 
 Use this API to integrate LogonBox Authenticator into your own PHP application authentication flows.  
 
