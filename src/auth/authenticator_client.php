@@ -255,7 +255,7 @@ class AuthenticatorClient
             $principal,
             $fingerprint,
             $this->remoteName,
-            $this->promptText,
+            $this->replaceVariables($this->promptText, $principal),
             $this->authorizeText,
             $flags
         );
